@@ -6,8 +6,7 @@ const player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
     width: 20,
-    height: 20,
-    color: 'blue',
+    height: 30, // Adjusted for character proportions
     speed: 4,
     money: 1000,
     checkedIn: false,
@@ -164,8 +163,12 @@ function draw() {
     });
 
     // Draw player
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    // Body
+    ctx.fillStyle = 'blue'; // Shirt color
+    ctx.fillRect(player.x, player.y + 10, player.width, player.height - 10);
+    // Head
+    ctx.fillStyle = '#FADBD8'; // Skin tone
+    ctx.fillRect(player.x, player.y, player.width, 12);
 
     // Display UI text
     let currentZone = 'Walking';
