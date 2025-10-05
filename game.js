@@ -15,12 +15,12 @@ const player = {
 };
 
 // Airport Zones
-const zones = [
-    { x: 0, y: 0, width: 350, height: 250, color: '#D4EFDF', name: 'Check-in' },
-    { x: 350, y: 0, width: 450, height: 250, color: '#D6EAF8', name: 'Security' },
-    { x: 0, y: 250, width: 800, height: 200, color: '#FADBD8', name: 'Food Court' },
-    { x: 0, y: 450, width: 800, height: 150, color: '#E5E7E9', name: 'Gates' }
-];
+const zones = {
+    checkIn: { x: 0, y: 0, width: 350, height: 250, color: '#D4EFDF', name: 'Check-in' },
+    security: { x: 350, y: 0, width: 450, height: 250, color: '#D6EAF8', name: 'Security' },
+    foodCourt: { x: 0, y: 250, width: 800, height: 200, color: '#FADBD8', name: 'Food Court' },
+    gates: { x: 0, y: 450, width: 800, height: 150, color: '#E5E7E9', name: 'Gates' }
+};
 
 const checkInCounters = [
     { x: 50, y: 80, width: 60, height: 40, color: 'green', name: 'Economy', cost: 0, interactionZone: { x: 40, y: 70, width: 80, height: 60 } },
@@ -32,7 +32,8 @@ const ui = {
     showInteractionPrompt: false,
     interactionTarget: null,
     showCheckInMenu: false,
-    menuMessage: ''
+    menuMessage: '',
+    securityMessage: ''
 };
 
 const checkInButton = { x: canvas.width / 2 - 50, y: canvas.height / 2 + 20, width: 100, height: 40 };
@@ -72,6 +73,9 @@ function handleCheckIn() {
 function update() {
     if (ui.showCheckInMenu) return; // Freeze player when menu is open
 
+    const prevX = player.x;
+    const prevY = player.y;
+
     if (keys.ArrowUp && player.y > 0) {
         player.y -= player.speed;
     }
@@ -83,6 +87,14 @@ function update() {
     }
     if (keys.ArrowRight && player.x < canvas.width - player.width) {
         player.x += player.speed;
+    }
+
+    // Security check
+    if (checkCollision(player, zones.security) && !player.checkedIn) {
+        player.x = prevX;
+        player.y = prevY;
+        ui.securityMessage = 'You must check in first!';
+        setTimeout(() => { ui.securityMessage = ''; }, 2000);
     }
 
     // Interaction logic
@@ -102,14 +114,15 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw zones
-    zones.forEach(zone => {
+    for (const key in zones) {
+        const zone = zones[key];
         ctx.fillStyle = zone.color;
         ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
         ctx.fillStyle = 'black';
         ctx.font = '20px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(zone.name, zone.x + zone.width / 2, zone.y + zone.height / 2);
-    });
+    }
 
     // Draw check-in counters
     checkInCounters.forEach(counter => {
@@ -127,17 +140,27 @@ function draw() {
 
     // Display current zone
     let currentZone = 'Walking';
-    zones.forEach(zone => {
+    for (const key in zones) {
+        const zone = zones[key];
         if (checkCollision(player, zone)) {
             currentZone = zone.name;
+            break;
         }
-    });
+    }
     ctx.fillStyle = 'black';
     ctx.font = '16px Arial';
     ctx.textAlign = 'left';
     ctx.fillText(`Current area: ${currentZone}`, 10, 20);
     ctx.fillText(`Money: $${player.money}`, 10, 40);
     ctx.fillText(`Ticket: ${player.ticketType || 'None'}`, 10, 60);
+
+    // Draw security message
+    if (ui.securityMessage) {
+        ctx.fillStyle = 'red';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(ui.securityMessage, canvas.width / 2, 20);
+    }
 
     // Draw interaction prompt or menu
     if (ui.showCheckInMenu) {
