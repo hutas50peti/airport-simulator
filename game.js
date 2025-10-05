@@ -10,7 +10,8 @@ const player = {
     speed: 4,
     money: 1000,
     checkedIn: false,
-    ticketType: null
+    ticketType: null,
+    animFrame: 0
 };
 
 // Airport Zones
@@ -110,6 +111,12 @@ function update() {
     const prevX = player.x;
     const prevY = player.y;
 
+    const isMoving = keys.ArrowUp || keys.ArrowDown || keys.ArrowLeft || keys.ArrowRight;
+
+    if (isMoving) {
+        player.animFrame++;
+    }
+
     if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
     if (keys.ArrowDown && player.y < canvas.height - player.height) player.y += player.speed;
     if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
@@ -180,12 +187,14 @@ function draw() {
     });
 
     // Draw player
+    const bob = Math.sin(player.animFrame / 6) * 2; // Calculate bobbing effect
+    const drawY = player.y + bob;
     // Body
     ctx.fillStyle = 'blue'; // Shirt color
-    ctx.fillRect(player.x, player.y + 10, player.width, player.height - 10);
+    ctx.fillRect(player.x, drawY + 10, player.width, player.height - 10);
     // Head
     ctx.fillStyle = '#FADBD8'; // Skin tone
-    ctx.fillRect(player.x, player.y, player.width, 12);
+    ctx.fillRect(player.x, drawY, player.width, 12);
 
     // Display UI text
     let currentZone = 'Walking';
