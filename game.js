@@ -30,8 +30,12 @@ const checkInCounters = [
 
 const ui = {
     showInteractionPrompt: false,
-    interactionTarget: null
+    interactionTarget: null,
+    showCheckInMenu: false,
+    menuMessage: ''
 };
+
+const checkInButton = { x: canvas.width / 2 - 50, y: canvas.height / 2 + 20, width: 100, height: 40 };
 
 // Keyboard input
 const keys = {
@@ -50,7 +54,24 @@ function checkCollision(rect1, rect2) {
            rect1.y + rect1.height > rect2.y;
 }
 
+function handleCheckIn() {
+    const counter = ui.interactionTarget;
+    if (player.checkedIn) {
+        ui.menuMessage = 'You have already checked in!';
+    } else if (player.money < counter.cost) {
+        ui.menuMessage = 'Not enough money!';
+    } else {
+        player.money -= counter.cost;
+        player.checkedIn = true;
+        player.ticketType = counter.name;
+        ui.menuMessage = `Successfully checked in for ${counter.name}!`;
+    }
+    setTimeout(() => { ui.showCheckInMenu = false; ui.menuMessage = ''; }, 2000);
+}
+
 function update() {
+    if (ui.showCheckInMenu) return; // Freeze player when menu is open
+
     if (keys.ArrowUp && player.y > 0) {
         player.y -= player.speed;
     }
@@ -118,8 +139,35 @@ function draw() {
     ctx.fillText(`Money: $${player.money}`, 10, 40);
     ctx.fillText(`Ticket: ${player.ticketType || 'None'}`, 10, 60);
 
-    // Draw interaction prompt
-    if (ui.showInteractionPrompt) {
+    // Draw interaction prompt or menu
+    if (ui.showCheckInMenu) {
+        // Draw menu background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(canvas.width / 2 - 200, canvas.height / 2 - 100, 400, 200);
+
+        // Draw menu text
+        ctx.fillStyle = 'white';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${ui.interactionTarget.name} Check-in`, canvas.width / 2, canvas.height / 2 - 60);
+        ctx.font = '18px Arial';
+        ctx.fillText(`Cost: $${ui.interactionTarget.cost}`, canvas.width / 2, canvas.height / 2 - 20);
+
+        // Draw button
+        ctx.fillStyle = 'green';
+        ctx.fillRect(checkInButton.x, checkInButton.y, checkInButton.width, checkInButton.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.fillText('Check-in', canvas.width / 2, canvas.height / 2 + 45);
+
+        // Draw message
+        if (ui.menuMessage) {
+            ctx.fillStyle = 'yellow';
+            ctx.font = '16px Arial';
+            ctx.fillText(ui.menuMessage, canvas.width / 2, canvas.height / 2 + 80);
+        }
+
+    } else if (ui.showInteractionPrompt) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(canvas.width / 2 - 150, canvas.height - 60, 300, 40);
         ctx.fillStyle = 'white';
@@ -139,12 +187,25 @@ function gameLoop() {
 window.addEventListener('keydown', (e) => {
     if (e.key in keys) {
         keys[e.key] = true;
+        if ((e.key === 'e' || e.key === 'E') && ui.showInteractionPrompt) {
+            ui.showCheckInMenu = true;
+        }
     }
 });
 
 window.addEventListener('keyup', (e) => {
     if (e.key in keys) {
         keys[e.key] = false;
+    }
+});
+
+canvas.addEventListener('click', (e) => {
+    if (ui.showCheckInMenu) {
+        const rect = canvas.getBoundingClientRect();
+        const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        if (checkCollision(mouse, { ...checkInButton, width: checkInButton.width, height: checkInButton.height })) {
+            handleCheckIn();
+        }
     }
 });
 
