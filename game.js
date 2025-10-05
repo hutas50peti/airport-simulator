@@ -6,13 +6,33 @@ const player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
     width: 20,
-    height: 30, // Adjusted for character proportions
+    height: 30,
     speed: 4,
     money: 1000,
     checkedIn: false,
     ticketType: null,
     animFrame: 0
 };
+
+// NPCs
+const npcs = [];
+const npcCount = 10;
+
+function createNPCs() {
+    for (let i = 0; i < npcCount; i++) {
+        npcs.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            width: 20,
+            height: 30,
+            speed: 0.5 + Math.random() * 1,
+            targetX: Math.random() * canvas.width,
+            targetY: Math.random() * canvas.height,
+            color: `hsl(${Math.random() * 360}, 40%, 50%)`,
+            animFrame: Math.floor(Math.random() * 100)
+        });
+    }
+}
 
 // Airport Zones
 const zones = {
@@ -105,6 +125,23 @@ function handlePurchase(product) {
     setTimeout(() => { ui.menuMessage = ''; }, 1500);
 }
 
+function updateNPCs() {
+    for (const npc of npcs) {
+        const dx = npc.targetX - npc.x;
+        const dy = npc.targetY - npc.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < npc.speed * 5) { // If close to target, get a new one
+            npc.targetX = Math.random() * canvas.width;
+            npc.targetY = Math.random() * canvas.height;
+        } else {
+            npc.x += (dx / dist) * npc.speed;
+            npc.y += (dy / dist) * npc.speed;
+        }
+        npc.animFrame++;
+    }
+}
+
 function update() {
     if (ui.showCheckInMenu || ui.showShopMenu) return; // Freeze player when menu is open
 
@@ -130,6 +167,8 @@ function update() {
         setTimeout(() => { ui.securityMessage = ''; }, 2000);
     }
 
+    updateNPCs();
+
     // Interaction logic
     ui.showInteractionPrompt = false;
     ui.interactionTarget = null;
@@ -151,6 +190,19 @@ function update() {
                 break;
             }
         }
+    }
+}
+
+function drawNPCs() {
+    for (const npc of npcs) {
+        const bob = Math.sin(npc.animFrame / 6) * 2;
+        const drawY = npc.y + bob;
+        // Body
+        ctx.fillStyle = npc.color;
+        ctx.fillRect(npc.x, drawY + 10, npc.width, npc.height - 10);
+        // Head
+        ctx.fillStyle = '#FADBD8';
+        ctx.fillRect(npc.x, drawY, npc.width, 12);
     }
 }
 
@@ -185,6 +237,8 @@ function draw() {
         ctx.textAlign = 'center';
         ctx.fillText(shop.name, shop.x + shop.width / 2, shop.y + shop.height / 2 + 5);
     });
+
+    drawNPCs();
 
     // Draw player
     const bob = Math.sin(player.animFrame / 6) * 2; // Calculate bobbing effect
@@ -334,5 +388,6 @@ canvas.addEventListener('click', (e) => {
     }
 });
 
+createNPCs();
 // Start game loop
 gameLoop();
