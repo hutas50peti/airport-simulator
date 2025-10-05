@@ -44,6 +44,13 @@ const ui = {
 
 const checkInButton = { x: canvas.width / 2 - 50, y: canvas.height / 2 + 20, width: 100, height: 40 };
 
+// Sound assets
+const sounds = {
+    purchase: 'sounds/purchase.mp3',
+    checkIn: 'sounds/checkin.mp3',
+    error: 'sounds/error.mp3'
+};
+
 // Keyboard input
 const keys = {
     ArrowUp: false,
@@ -62,17 +69,25 @@ function checkCollision(rect1, rect2) {
            rect1.y + rect1.height > rect2.y;
 }
 
+function playSound(soundName) {
+    const sound = new Audio(sounds[soundName]);
+    sound.play();
+}
+
 function handleCheckIn() {
     const counter = ui.interactionTarget;
     if (player.checkedIn) {
         ui.menuMessage = 'You have already checked in!';
+        playSound('error');
     } else if (player.money < counter.cost) {
         ui.menuMessage = 'Not enough money!';
+        playSound('error');
     } else {
         player.money -= counter.cost;
         player.checkedIn = true;
         player.ticketType = counter.name;
         ui.menuMessage = `Successfully checked in for ${counter.name}!`;
+        playSound('checkIn');
     }
     setTimeout(() => { ui.showCheckInMenu = false; ui.menuMessage = ''; }, 2000);
 }
@@ -80,9 +95,11 @@ function handleCheckIn() {
 function handlePurchase(product) {
     if (player.money < product.cost) {
         ui.menuMessage = 'Not enough money!';
+        playSound('error');
     } else {
         player.money -= product.cost;
         ui.menuMessage = `You bought a ${product.name}!`;
+        playSound('purchase');
     }
     setTimeout(() => { ui.menuMessage = ''; }, 1500);
 }
